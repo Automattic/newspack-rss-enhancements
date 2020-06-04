@@ -33,6 +33,8 @@ class Newspack_RSS_Enhancements {
 		add_filter( 'option_rss_use_excerpt', [ __CLASS__, 'filter_use_rss_excerpt' ] );
 		add_action( 'pre_get_posts', [ __CLASS__, 'modify_feed_query' ] );
 		add_action( 'rss2_item', [ __CLASS__, 'add_extra_tags' ] );
+		add_filter( 'the_excerpt_rss', [ __CLASS__, 'maybe_remove_content_featured_image' ], 1 );
+		add_filter( 'the_content_feed', [ __CLASS__, 'maybe_remove_content_featured_image' ], 1 );
 	}
 
 	/**
@@ -54,13 +56,14 @@ class Newspack_RSS_Enhancements {
 	 */
 	public static function get_feed_settings( $feed_post = null ) {
 		$default_settings = [
-			'category_include'  => [],
-			'category_exclude'  => [],
-			'use_image_tags'    => false,
-			'use_media_tags'    => false,
-			'use_updated_tags'  => false,
-			'full_content'      => true,
-			'num_items_in_feed' => 10,
+			'category_include'       => [],
+			'category_exclude'       => [],
+			'use_image_tags'         => false,
+			'use_media_tags'         => false,
+			'use_updated_tags'       => false,
+			'full_content'           => true,
+			'num_items_in_feed'      => 10,
+			'content_featured_image' => false,
 		];
 
 		if ( ! $feed_post ) {
@@ -324,6 +327,13 @@ class Newspack_RSS_Enhancements {
 					<input type="checkbox" name="use_updated_tags" value="1" <?php checked( $settings['use_updated_tags'] ); ?> />
 				</td>
 			</tr>
+			<tr>
+				<th><?php esc_html_e( 'Add featured image at the top of feed content', 'newspack-rss-enhancements' ); ?></th>
+				<td>
+					<input type="hidden" name="content_featured_image" value="0" />
+					<input type="checkbox" name="content_featured_image" value="1" <?php checked( $settings['content_featured_image'] ); ?> />
+				</td>
+			</tr>
 		</table>
 		<?php
 	}
@@ -356,6 +366,9 @@ class Newspack_RSS_Enhancements {
 
 		$full_content = filter_input( INPUT_POST, 'full_content', FILTER_SANITIZE_NUMBER_INT );
 		$settings['full_content'] = (bool) $full_content;
+
+		$content_featured_image = filter_input( INPUT_POST, 'content_featured_image', FILTER_SANITIZE_NUMBER_INT );
+		$settings['content_featured_image'] = (bool) $content_featured_image;
 
 		$num_items_in_feed = filter_input( INPUT_POST, 'num_items_in_feed', FILTER_SANITIZE_NUMBER_INT );
 		$settings['num_items_in_feed'] = absint( $num_items_in_feed );
@@ -477,6 +490,26 @@ class Newspack_RSS_Enhancements {
 				}
 			}
 		}
+	}
+
+	/** 
+	 * The Newspack Theme adds featured images to the top of feed content by default. This setting toggles whether to do that.
+	 *
+	 * @param string $content Feed content.
+	 * @return string Unmodified $content.
+	 */
+	public static function maybe_remove_content_featured_image( $content ) {
+		$settings = self::get_feed_settings();
+		if ( ! $settings ) {
+			return;
+		}
+
+		if ( ! $settings['content_featured_image'] ) {
+			remove_filter( 'the_excerpt_rss', 'newspack_thumbnails_in_rss' );
+			remove_filter( 'the_content_feed', 'newspack_thumbnails_in_rss' );
+		}
+
+		return $content;
 	}
 }
 Newspack_RSS_Enhancements::init();
