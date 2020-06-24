@@ -463,10 +463,7 @@ class Newspack_RSS_Enhancements {
 		if ( $settings['use_image_tags'] ) {
 			$thumbnail_url = get_the_post_thumbnail_url( $post, 'full' );
 			if ( $thumbnail_url ) :
-				?>
-				<image>
-					<?php echo esc_url( $thumbnail_url ); ?>
-				</image>
+				?><image><?php echo esc_url( $thumbnail_url ); ?></image>
 				<?php
 			endif;
 		}
