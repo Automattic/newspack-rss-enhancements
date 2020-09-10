@@ -498,7 +498,7 @@ class Newspack_RSS_Enhancements {
 	public static function maybe_remove_content_featured_image( $content ) {
 		$settings = self::get_feed_settings();
 		if ( ! $settings ) {
-			return;
+			return $content;
 		}
 
 		if ( ! $settings['content_featured_image'] ) {
