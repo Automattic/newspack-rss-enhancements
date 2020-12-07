@@ -35,6 +35,7 @@ class Newspack_RSS_Enhancements {
 		add_action( 'rss2_item', [ __CLASS__, 'add_extra_tags' ] );
 		add_filter( 'the_excerpt_rss', [ __CLASS__, 'maybe_remove_content_featured_image' ], 1 );
 		add_filter( 'the_content_feed', [ __CLASS__, 'maybe_remove_content_featured_image' ], 1 );
+		add_filter( 'wpseo_include_rss_footer', [ __CLASS__, 'maybe_suppress_yoast' ] );
 	}
 
 	/**
@@ -64,6 +65,7 @@ class Newspack_RSS_Enhancements {
 			'full_content'           => true,
 			'num_items_in_feed'      => 10,
 			'content_featured_image' => false,
+			'suppress_yoast'         => false,
 		];
 
 		if ( ! $feed_post ) {
@@ -334,6 +336,20 @@ class Newspack_RSS_Enhancements {
 					<input type="checkbox" name="content_featured_image" value="1" <?php checked( $settings['content_featured_image'] ); ?> />
 				</td>
 			</tr>
+			<?php if ( defined( 'WPSEO_VERSION' ) && WPSEO_VERSION ) : ?>
+				<tr>
+					<th>
+						<?php echo sprintf(
+							__( 'Suppress <a href="%s">Yoast RSS content at the top and bottom of feed posts</a>' ),
+							admin_url( 'admin.php?page=wpseo_titles#top#rss' )
+						); ?>
+					</th>
+					<td>
+						<input type="hidden" name="suppress_yoast" value="0" />
+						<input type="checkbox" name="suppress_yoast" value="1" <?php checked( $settings['suppress_yoast'] ); ?> />
+					</td>
+				</tr>
+			<?php endif; ?>
 		</table>
 		<?php
 	}
@@ -372,6 +388,9 @@ class Newspack_RSS_Enhancements {
 
 		$num_items_in_feed = filter_input( INPUT_POST, 'num_items_in_feed', FILTER_SANITIZE_NUMBER_INT );
 		$settings['num_items_in_feed'] = absint( $num_items_in_feed );
+
+		$suppress_yoast = filter_input( INPUT_POST, 'suppress_yoast', FILTER_SANITIZE_NUMBER_INT );
+		$settings['suppress_yoast'] = (bool) $suppress_yoast;
 
 		$category_settings = filter_input_array( 
 			INPUT_POST,
@@ -507,6 +526,21 @@ class Newspack_RSS_Enhancements {
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Suppress the Yoast prepended and appended content depending on setting.
+	 *
+	 * @param bool $include_yoast Whether to prepand and append content to the feed items.
+	 * @return bool Modified $include_yoast
+	 */
+	public static function maybe_suppress_yoast( $include_yoast ) {
+		$settings = self::get_feed_settings();
+		if ( ! $settings ) {
+			return $include_yoast;
+		}
+
+		return ! (bool) $settings['suppress_yoast'];
 	}
 }
 Newspack_RSS_Enhancements::init();
