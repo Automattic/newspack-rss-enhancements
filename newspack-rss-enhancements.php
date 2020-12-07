@@ -36,6 +36,7 @@ class Newspack_RSS_Enhancements {
 		add_filter( 'the_excerpt_rss', [ __CLASS__, 'maybe_remove_content_featured_image' ], 1 );
 		add_filter( 'the_content_feed', [ __CLASS__, 'maybe_remove_content_featured_image' ], 1 );
 		add_filter( 'wpseo_include_rss_footer', [ __CLASS__, 'maybe_suppress_yoast' ] );
+		add_action( 'rss2_ns', [ __CLASS__, 'maybe_inject_yahoo_namespace' ] );
 	}
 
 	/**
@@ -66,6 +67,7 @@ class Newspack_RSS_Enhancements {
 			'num_items_in_feed'      => 10,
 			'content_featured_image' => false,
 			'suppress_yoast'         => false,
+			'yahoo_namespace'        => false,
 		];
 
 		if ( ! $feed_post ) {
@@ -336,6 +338,13 @@ class Newspack_RSS_Enhancements {
 					<input type="checkbox" name="content_featured_image" value="1" <?php checked( $settings['content_featured_image'] ); ?> />
 				</td>
 			</tr>
+			<tr>
+				<th><?php esc_html_e( 'Add Yahoo namespace to RSS namespace: xmlns:media="http://search.yahoo.com/mrss/"', 'newspack-rss-enhancements' ); ?></th>
+				<td>
+					<input type="hidden" name="yahoo_namespace" value="0" />
+					<input type="checkbox" name="yahoo_namespace" value="1" <?php checked( $settings['yahoo_namespace'] ); ?> />
+				</td>
+			</tr>
 			<?php if ( defined( 'WPSEO_VERSION' ) && WPSEO_VERSION ) : ?>
 				<tr>
 					<th>
@@ -391,6 +400,9 @@ class Newspack_RSS_Enhancements {
 
 		$suppress_yoast = filter_input( INPUT_POST, 'suppress_yoast', FILTER_SANITIZE_NUMBER_INT );
 		$settings['suppress_yoast'] = (bool) $suppress_yoast;
+
+		$yahoo_namespace = filter_input( INPUT_POST, 'yahoo_namespace', FILTER_SANITIZE_NUMBER_INT );
+		$settings['yahoo_namespace'] = (bool) $yahoo_namespace;
 
 		$category_settings = filter_input_array( 
 			INPUT_POST,
@@ -541,6 +553,22 @@ class Newspack_RSS_Enhancements {
 		}
 
 		return ! (bool) $settings['suppress_yoast'];
+	}
+
+	/**
+	 * Add the 'xmlns:media="http://search.yahoo.com/mrss/"' namespace to feed if setting is checked.
+	 */
+	public static function maybe_inject_yahoo_namespace() {
+		$settings = self::get_feed_settings();
+		if ( ! $settings ) {
+			return;
+		}
+
+		if ( $settings['yahoo_namespace'] ) {
+?>
+xmlns:media="http://search.yahoo.com/mrss/"
+<?php
+		}
 	}
 }
 Newspack_RSS_Enhancements::init();
