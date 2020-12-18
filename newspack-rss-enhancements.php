@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Newspack RSS Enhancements
  * Description:       Adds ability to create custom RSS fields using query params.
- * Version:           0.3.0
+ * Version:           0.3.1
  * Author:            Automattic
  * Author URI:        https://automattic.com
  * Text Domain:       newspack-rss-enhancements
