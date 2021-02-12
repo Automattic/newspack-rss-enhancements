@@ -63,6 +63,7 @@ class Newspack_RSS_Enhancements {
 			'use_image_tags'         => false,
 			'use_media_tags'         => false,
 			'use_updated_tags'       => false,
+			'use_tags_tags'          => false,
 			'full_content'           => true,
 			'num_items_in_feed'      => 10,
 			'content_featured_image' => false,
@@ -163,7 +164,7 @@ class Newspack_RSS_Enhancements {
 			</a>
 			<?php
 		}
-	} 
+	}
 
 	/**
 	 * Add metaboxes to CPT screen.
@@ -332,6 +333,13 @@ class Newspack_RSS_Enhancements {
 				</td>
 			</tr>
 			<tr>
+				<th><?php esc_html_e( 'Add categories and tags in <tags> element', 'newspack-rss-enhancements' ); ?></th>
+				<td>
+					<input type="hidden" name="use_tags_tags" value="0" />
+					<input type="checkbox" name="use_tags_tags" value="1" <?php checked( $settings['use_tags_tags'] ); ?> />
+				</td>
+			</tr>
+			<tr>
 				<th><?php esc_html_e( 'Add featured image at the top of feed content', 'newspack-rss-enhancements' ); ?></th>
 				<td>
 					<input type="hidden" name="content_featured_image" value="0" />
@@ -389,6 +397,9 @@ class Newspack_RSS_Enhancements {
 		$use_updated_tags = filter_input( INPUT_POST, 'use_updated_tags', FILTER_SANITIZE_NUMBER_INT );
 		$settings['use_updated_tags'] = (bool) $use_updated_tags;
 
+		$use_updated_tags = filter_input( INPUT_POST, 'use_tags_tags', FILTER_SANITIZE_NUMBER_INT );
+		$settings['use_tags_tags'] = (bool) $use_updated_tags;
+
 		$full_content = filter_input( INPUT_POST, 'full_content', FILTER_SANITIZE_NUMBER_INT );
 		$settings['full_content'] = (bool) $full_content;
 
@@ -404,9 +415,9 @@ class Newspack_RSS_Enhancements {
 		$yahoo_namespace = filter_input( INPUT_POST, 'yahoo_namespace', FILTER_SANITIZE_NUMBER_INT );
 		$settings['yahoo_namespace'] = (bool) $yahoo_namespace;
 
-		$category_settings = filter_input_array( 
+		$category_settings = filter_input_array(
 			INPUT_POST,
-			[ 
+			[
 				'category_include' => [
 					'filter' => FILTER_SANITIZE_NUMBER_INT,
 					'flags'  => FILTER_REQUIRE_ARRAY,
@@ -505,6 +516,18 @@ class Newspack_RSS_Enhancements {
 			<?php
 		}
 
+		if ( $settings['use_tags_tags'] ) {
+			$cats         = get_the_terms( $post, 'category' );
+			$cats         = ( ! is_array( $cats ) ) ? [] : $cats;
+			$tags         = get_the_terms( $post, 'post_tag' );
+			$tags         = ( ! is_array( $tags ) ) ? [] : $tags;
+			$all_terms    = array_merge( $cats, $tags );
+			$terms_string = implode( ',', wp_list_pluck( $all_terms, 'name' ) );
+			?>
+			<tags><?php echo esc_html( $terms_string ); ?></tags>
+			<?php
+		}
+
 		if ( $settings['use_media_tags'] ) {
 			$thumbnail_id = get_post_thumbnail_id();
 			if ( $thumbnail_id ) {
@@ -520,7 +543,7 @@ class Newspack_RSS_Enhancements {
 		}
 	}
 
-	/** 
+	/**
 	 * The Newspack Theme adds featured images to the top of feed content by default. This setting toggles whether to do that.
 	 *
 	 * @param string $content Feed content.
