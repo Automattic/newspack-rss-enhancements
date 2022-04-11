@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Newspack RSS Enhancements
  * Description:       Adds ability to create custom RSS fields using query params.
- * Version:           0.3.1
+ * Version:           0.3.2
  * Author:            Automattic
  * Author URI:        https://automattic.com
  * Text Domain:       newspack-rss-enhancements
@@ -66,6 +66,7 @@ class Newspack_RSS_Enhancements {
 			'use_tags_tags'          => false,
 			'full_content'           => true,
 			'num_items_in_feed'      => 10,
+			'timeframe'              => false,
 			'content_featured_image' => false,
 			'suppress_yoast'         => false,
 			'yahoo_namespace'        => false,
@@ -261,6 +262,12 @@ class Newspack_RSS_Enhancements {
 				</td>
 			</tr>
 			<tr>
+				<th><?php esc_html_e( 'Limit timeframe to last # of hours:', 'newspack-rss-enhancements' ); ?></th>
+				<td>
+					<input name="timeframe" type="number" value="<?php echo esc_attr( $settings['timeframe'] ); ?>" />
+				</td>
+			</tr>
+			<tr>
 				<th><?php esc_html_e( 'Use post full content or excerpt:', 'newspack-rss-enhancements' ); ?></th>
 				<td>
 					<select name="full_content">
@@ -409,6 +416,9 @@ class Newspack_RSS_Enhancements {
 		$num_items_in_feed = filter_input( INPUT_POST, 'num_items_in_feed', FILTER_SANITIZE_NUMBER_INT );
 		$settings['num_items_in_feed'] = absint( $num_items_in_feed );
 
+		$timeframe = filter_input( INPUT_POST, 'timeframe', FILTER_SANITIZE_NUMBER_INT );
+		$settings['timeframe'] = absint( $timeframe );
+
 		$suppress_yoast = filter_input( INPUT_POST, 'suppress_yoast', FILTER_SANITIZE_NUMBER_INT );
 		$settings['suppress_yoast'] = (bool) $suppress_yoast;
 
@@ -462,6 +472,10 @@ class Newspack_RSS_Enhancements {
 		}
 
 		$query->set( 'posts_per_rss', absint( $settings['num_items_in_feed'] ) );
+
+		if ( ! empty( $settings['timeframe'] ) ) {
+			$query->set( 'date_query', ['after' => date("Y-m-d H:i:s", strtotime("- ".$settings['timeframe']." hours"))] );
+		}
 
 		if ( ! empty( $settings['category_include'] ) ) {
 			$query->set( 'category__in', array_map( 'absint', $settings['category_include'] ) );
