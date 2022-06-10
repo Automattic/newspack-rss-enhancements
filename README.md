@@ -1,3 +1,5 @@
+_This functionality has been [merged into the Newspack Plugin](https://github.com/Automattic/newspack-plugin/pull/1688)_
+
 # newspack-rss-enhancements
 
 This plugin adds a new RSS Feeds section to WP Admin. Within that section, you can create and manage customized RSS feeds for syndication partners.
